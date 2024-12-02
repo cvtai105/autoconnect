@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/aes"
 	"encoding/base64"
@@ -10,12 +11,15 @@ import (
 )
 
 func main() {
-	var mac, datetime string
-	fmt.Println("Enter mac address: ")
-	fmt.Scanln(&mac)
-	fmt.Println("Enter date time: ")
-	fmt.Scanln(&datetime)
 
+	
+
+	mac, datetime, err := readFirstTwoLines("info.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	
 	mac = convertMAC(mac)
 
 	// Encrypt mac address and datetime
@@ -25,13 +29,46 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
+	
 	// Encode to base64
 	encodedString := base64.StdEncoding.EncodeToString(ciphertext)
+	fmt.Println(mac+"/"+datetime)
 	fmt.Println(encodedString)
-
+	
 	writeToFile("key.txt", encodedString)
 }
+
+// Hàm để đọc 2 dòng đầu tiên của file
+func readFirstTwoLines(filePath string) (string, string, error) {
+	// Mở file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", "", err
+	}
+	defer file.Close()
+
+	// Sử dụng bufio.Scanner để đọc các dòng
+	scanner := bufio.NewScanner(file)
+	var firstLine, secondLine string
+
+	// Đọc dòng đầu tiên
+	if scanner.Scan() {
+		firstLine = scanner.Text()
+	} else if err := scanner.Err(); err != nil {
+		return "", "", err
+	}
+
+	// Đọc dòng thứ hai
+	if scanner.Scan() {
+		secondLine = scanner.Text()
+	} else if err := scanner.Err(); err != nil {
+		return "", "", err
+	}
+
+	return firstLine, secondLine, nil
+}
+
+
 
 func writeToFile(filename, data string) {
 	file, err := os.Create(filename)

@@ -164,7 +164,7 @@ func AES_ECB_Decrypt(ciphertext, key []byte) ([]byte, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-		  LogError("Decryption error: invalid key")
+		  LogError("Decryption error: in")
 		}
 	}()
 

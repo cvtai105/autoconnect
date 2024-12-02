@@ -1,0 +1,12 @@
+tạo file syso: 
+    go install github.com/akavel/rsrc
+    rsrc -ico icon.ico -o icon.syso 
+ 
+build without console:
+    go build -ldflags "-H windowsgui"
+
+auto start when window startup
+    tạo và copy shortcut from FreeWifi.exe file
+    Nhấn tổ hợp phím Window+R
+    gõ "shell:startup" và Enter
+    Copy shortcut vào thư mục hiện ra
