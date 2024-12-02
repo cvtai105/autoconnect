@@ -1,4 +1,4 @@
-package encrypt
+package main
 
 import (
 	"bytes"
@@ -15,6 +15,8 @@ func main() {
 	fmt.Scanln(&mac)
 	fmt.Println("Enter date time: ")
 	fmt.Scanln(&datetime)
+
+	mac = convertMAC(mac)
 
 	// Encrypt mac address and datetime
 	key := []byte("c4d7e123f97b8a60")

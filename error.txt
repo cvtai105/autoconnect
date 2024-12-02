@@ -2,3 +2,14 @@
 2024/12/02 13:21:17 main.go:270: ERROR: cHWtnQRr91jUP1Gx+ENO2jstEabJJz8a49r0l5VbV42eFngPJrvZhegTNTnJpKpB
 2024/12/02 13:24:21 ERROR: line1: cHWtnQRr91jUP1Gx+ENO2jstEabJJz8a49r0l5VbV42eFngPJrvZhegTNTnJpKpB
 2024/12/02 13:40:15 ERROR: Wrong key!
+2024/12/02 14:31:45 ERROR: Wrong key!
+2024/12/02 14:32:17 ERROR: Wrong key!
+2024/12/02 14:32:27 ERROR: Wrong key!
+2024/12/02 14:36:16 ERROR: Expried
+2024/12/02 14:36:38 ERROR: Expried
+2024/12/02 14:39:01 ERROR: Expried
+2024/12/02 14:39:41 ERROR: Expried
+2024/12/02 14:44:24 ERROR: Expried
+2024/12/02 15:03:19 ERROR: Key is expried
+2024/12/02 15:05:58 ERROR: Key is expired!
+2024/12/02 15:06:54 ERROR: Error parsing date: parsing time "2025-02-31 15:00:00": day out of range

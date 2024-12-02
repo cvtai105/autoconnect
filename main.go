@@ -34,7 +34,7 @@ func sendRequest() error {
 	// Xây dựng request
 	req, err := http.NewRequest("POST", "http://rescue.wi-mesh.vn/login", bytes.NewBufferString(formData.Encode()))
 	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
+		LogError("Error creating request")
 	}
 
 	// Thiết lập các headers
@@ -52,20 +52,9 @@ func sendRequest() error {
 	// Gửi request và xử lý response
 	client := &http.Client{}
 	_ , err = client.Do(req)
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return fmt.Errorf("error sending request: %v", err)
-	// }
-	// defer resp.Body.Close()
-
-	// // Kiểm tra mã trạng thái HTTP
-	// if resp.StatusCode != http.StatusOK {
-	// 	return fmt.Errorf("HTTP error! Status: %d", resp.StatusCode)
-	// }
-
-	// // Đọc body của response
-	// body, _ := io.ReadAll(resp.Body)
-	// fmt.Println("Response body:", string(body))
+	if err != nil {
+		LogError("request error: " + err.Error())
+	}
 
 	return err
 }
@@ -80,17 +69,21 @@ func isExpired(dateStr string) bool {
 
 	parsedTime, err := time.ParseInLocation(layout, dateStr, loc)
 	if err != nil {
+		LogError("Error parsing date: " + err.Error())
 		return true
 	}
 
-	fmt.Println("Thời gian hết hạn: ", parsedTime)
-
-	// Lấy thời gian hiện tại
+	//fmt.Println("Thời gian hết hạn: ", parsedTime)
 	currentTime := time.Now()
-	fmt.Println("Thời gian hiện tại: ", currentTime)
+	//fmt.Println("Thời gian hiện tại: ", currentTime)
 
 	// Kiểm tra xem thời gian đã qua hay chưa
-	return parsedTime.Before(currentTime)
+	expired := parsedTime.Before(currentTime)
+	if(expired) {
+		LogError("Key is expried")
+	}
+
+	return expired
 }
 
 func getMacAddress() string {
@@ -203,27 +196,6 @@ func isNetworkAvailable() bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-// AppendDateTimeToFile appends the current datetime to a specified file
-// func AppendDateTimeToFile(filename string) error {
-// 	// Get the current time
-// 	currentTime := time.Now().Format(time.RFC3339)
-
-// 	// Open the file in append mode (create it if it doesn't exist)
-// 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 	if err != nil {
-// 		return fmt.Errorf("error opening file: %w", err)
-// 	}
-// 	defer file.Close()
-
-// 	// Write the current datetime to the file
-// 	_, err = file.WriteString(currentTime + "\n")
-// 	if err != nil {
-// 		return fmt.Errorf("error writing to file: %w", err)
-// 	}
-
-// 	return nil
-// }
-
 //go:embed icon.ico
 var iconData []byte
 
@@ -268,8 +240,14 @@ func LogError(err string) {
 
 	// Log the error message with a prefix
 	logger.Printf("ERROR: %v\n", err)
+	fmt.Printf("ERROR: %v\n", err)
 	
 	//exit
+	quit()
+}
+
+func quit() {
+	os.Exit(1)
 	systray.Quit()
 }
 
@@ -284,49 +262,48 @@ func runAutoConnect() {
 
 	line1, _, err := readFirstTwoLines("key.txt")
 	if err != nil {
-		fmt.Println(err)
-		return
+		LogError("Cannot read key file!")
 	}
 
-	fmt.Println("line1: ", line1)
+	//fmt.Println("line1: ", line1)
 	decodedBytes1, err := base64.StdEncoding.DecodeString(line1)
-	fmt.Println("decodedBytes1: ", decodedBytes1)
 	if err != nil {	
 		LogError("Wrong key!")
-		return
+		quit()
 	}
 
 	message, err := AES_ECB_Decrypt(decodedBytes1, privateKey)
 	if err != nil {	
 		LogError("Wrong key!")
-		return
+		quit()
 	}
 	parts := strings.Split(string(message), "/")
 	if len(parts) != 2 {
 		LogError("Wrong key!")
-		return
+		quit()
 	}
 	address := parts[0]
 	datetime := parts[1]
+	fmt.Println("address: ", address)
+	fmt.Println("expired: ", datetime)
 
 	if address != getMacAddress() {
-		LogError("Key is not for this computer!")
-		return
+		LogError("Cannot use key for this computer!")
+		quit()
 	}
 
 	if isExpired(datetime) {
 		LogError("Key is expired!")
-		return;
+		quit()
 	} else {
-		fmt.Println("License còn hạn")
+		fmt.Println("Key còn hạn")
 	}
 
 	for {
 		if isNetworkAvailable() {
-			fmt.Println("Đang có kết nối internet")
+			//fmt.Println("Đang có kết nối internet")
 		} else {
 			fmt.Println("Mất kết nối internet")
-			// AppendDateTimeToFile("log.txt")
 			break
 		}
 		time.Sleep(2 * time.Second)
@@ -340,22 +317,21 @@ func runAutoConnect() {
 				break
 			}
 		}
-		fmt.Println("Sleep 899")
+		//fmt.Println("Sleep 899")
 		time.Sleep(899 * time.Second)
 
 		if isExpired(string(datetime)) {
-			fmt.Println("License hết hạn")
-			return;
+			LogError("Key is expired!")
+			quit();
 		} else {
-			fmt.Println("License còn hạn")
+			fmt.Println("Key còn hạn")
 		}	
 		
 		for {
 			if isNetworkAvailable() {
-				fmt.Println("Đang có kết nối internet")
+				//fmt.Println("Đang có kết nối internet")
 			} else {
-				fmt.Println("Mất kết nối internet")
-				// AppendDateTimeToFile("log.txt")
+				//fmt.Println("Mất kết nối internet")
 				break
 			}
 			time.Sleep(500 * time.Millisecond)
