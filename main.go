@@ -53,7 +53,7 @@ func sendRequest() error {
 	client := &http.Client{}
 	_ , err = client.Do(req)
 	if err != nil {
-		LogError("request error: " + err.Error())
+		// LogError("request host error")
 	}
 
 	return err
@@ -161,6 +161,13 @@ func AES_ECB_Encrypt(plaintext, key []byte) ([]byte, error) {
 }
 
 func AES_ECB_Decrypt(ciphertext, key []byte) ([]byte, error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+		  LogError("Decryption error: invalid key")
+		}
+	}()
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -325,8 +332,8 @@ func runAutoConnect() {
 			quit();
 		} else {
 			fmt.Println("Key còn hạn")
-		}	
-		
+		}
+
 		for {
 			if isNetworkAvailable() {
 				//fmt.Println("Đang có kết nối internet")

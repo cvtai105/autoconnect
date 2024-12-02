@@ -13,3 +13,5 @@
 2024/12/02 15:03:19 ERROR: Key is expried
 2024/12/02 15:05:58 ERROR: Key is expired!
 2024/12/02 15:06:54 ERROR: Error parsing date: parsing time "2025-02-31 15:00:00": day out of range
+2024/12/02 16:03:09 ERROR: Wrong key!
+2024/12/02 16:03:55 ERROR: Decryption error: invalid key
