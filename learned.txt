@@ -1,0 +1,7 @@
+tạo file syso: 
+    go install github.com/akavel/rsrc
+    rsrc -ico icon.ico -o icon.syso 
+ 
+build without console:
+    go build -ldflags "-H windowsgui"
+

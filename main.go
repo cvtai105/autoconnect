@@ -1,0 +1,366 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"crypto/aes"
+	_ "embed"
+	"encoding/base64"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/getlantern/systray"
+)
+
+func main() {
+	// Khởi động systray
+    systray.Run(onReady, nil)
+}
+
+func sendRequest() error {
+	// Xây dựng body của request
+	formData := url.Values{}
+	formData.Set("dst", "http://v1.awingconnect.vn/Success")
+	formData.Set("password", "Awing15-15@2023")
+	formData.Set("popup", "false")
+	formData.Set("username", "awing15-15")
+
+	// Xây dựng request
+	req, err := http.NewRequest("POST", "http://rescue.wi-mesh.vn/login", bytes.NewBufferString(formData.Encode()))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+
+	// Thiết lập các headers
+	req.Header.Set("documentLifecycle", "active")
+	req.Header.Set("frameType", "outermost_frame")
+	req.Header.Set("initiator", "http://v1.awingconnect.vn")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Origin", "http://v1.awingconnect.vn")
+	req.Header.Set("Referer", "http://v1.awingconnect.vn/")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+	// Gửi request và xử lý response
+	client := &http.Client{}
+	_ , err = client.Do(req)
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return fmt.Errorf("error sending request: %v", err)
+	// }
+	// defer resp.Body.Close()
+
+	// // Kiểm tra mã trạng thái HTTP
+	// if resp.StatusCode != http.StatusOK {
+	// 	return fmt.Errorf("HTTP error! Status: %d", resp.StatusCode)
+	// }
+
+	// // Đọc body của response
+	// body, _ := io.ReadAll(resp.Body)
+	// fmt.Println("Response body:", string(body))
+
+	return err
+}
+
+// Hàm kiểm tra xem ngày đã hết hạn chưa
+func isExpired(dateStr string) bool {
+	// Định dạng datetime trong chuỗi đầu vào
+	const layout = "2006-01-02 15:04:05"
+
+	// Parse chuỗi datetime thành time.Time
+	loc, _ := time.LoadLocation("Local")
+
+	parsedTime, err := time.ParseInLocation(layout, dateStr, loc)
+	if err != nil {
+		return true
+	}
+
+	fmt.Println("Thời gian hết hạn: ", parsedTime)
+
+	// Lấy thời gian hiện tại
+	currentTime := time.Now()
+	fmt.Println("Thời gian hiện tại: ", currentTime)
+
+	// Kiểm tra xem thời gian đã qua hay chưa
+	return parsedTime.Before(currentTime)
+}
+
+func getMacAddress() string {
+	// Lấy tất cả các giao diện mạng trên hệ thống
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Lặp qua từng giao diện mạng và in ra MAC address
+	for _, iface := range interfaces {
+		// Kiểm tra xem giao diện có MAC address không
+		if iface.HardwareAddr.String() != "" {
+			if(iface.Name == "Wi-Fi") {
+				return iface.HardwareAddr.String()
+			}
+		}
+	}
+	return ""
+}
+// Hàm để đọc 2 dòng đầu tiên của file
+func readFirstTwoLines(filePath string) (string, string, error) {
+	// Mở file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", "", err
+	}
+	defer file.Close()
+
+	// Sử dụng bufio.Scanner để đọc các dòng
+	scanner := bufio.NewScanner(file)
+	var firstLine, secondLine string
+
+	// Đọc dòng đầu tiên
+	if scanner.Scan() {
+		firstLine = scanner.Text()
+	} else if err := scanner.Err(); err != nil {
+		return "", "", err
+	}
+
+	// Đọc dòng thứ hai
+	if scanner.Scan() {
+		secondLine = scanner.Text()
+	} else if err := scanner.Err(); err != nil {
+		return "", "", err
+	}
+
+	return firstLine, secondLine, nil
+}
+
+
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - len(ciphertext)%blockSize
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padText...)
+}
+
+func AES_ECB_Encrypt(plaintext, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Padding plaintext to be a multiple of block size
+	plaintext = PKCS7Padding(plaintext, block.BlockSize())
+
+	ciphertext := make([]byte, len(plaintext))
+
+	// Encrypt each block
+	for i := 0; i < len(plaintext); i += block.BlockSize() {
+		block.Encrypt(ciphertext[i:i+block.BlockSize()], plaintext[i:i+block.BlockSize()])
+	}
+
+	return ciphertext, nil
+}
+
+func AES_ECB_Decrypt(ciphertext, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	plaintext := make([]byte, len(ciphertext))
+
+	// Decrypt each block
+	for i := 0; i < len(ciphertext); i += block.BlockSize() {
+		block.Decrypt(plaintext[i:i+block.BlockSize()], ciphertext[i:i+block.BlockSize()])
+	}
+
+	// Remove padding
+	padding := int(plaintext[len(plaintext)-1])
+	return plaintext[:len(plaintext)-padding], nil
+}
+
+func isNetworkAvailable() bool {
+	// Try to reach a reliable URL (e.g., Google DNS or Google website)
+	url := "http://google.com"
+	client := http.Client{
+		Timeout: 5 * time.Second, // Set a timeout to avoid hanging indefinitely
+	}
+
+	// Send a GET request
+	resp, err := client.Head(url)
+	if err != nil {
+		return false // If there's an error, no internet connection
+	}
+	defer resp.Body.Close()
+
+	// Check if the status code indicates success
+	return resp.StatusCode == http.StatusOK
+}
+
+// AppendDateTimeToFile appends the current datetime to a specified file
+// func AppendDateTimeToFile(filename string) error {
+// 	// Get the current time
+// 	currentTime := time.Now().Format(time.RFC3339)
+
+// 	// Open the file in append mode (create it if it doesn't exist)
+// 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// 	if err != nil {
+// 		return fmt.Errorf("error opening file: %w", err)
+// 	}
+// 	defer file.Close()
+
+// 	// Write the current datetime to the file
+// 	_, err = file.WriteString(currentTime + "\n")
+// 	if err != nil {
+// 		return fmt.Errorf("error writing to file: %w", err)
+// 	}
+
+// 	return nil
+// }
+
+//go:embed icon.ico
+var iconData []byte
+
+func getIcon() []byte {
+    if iconData == nil {
+        log.Fatal("Icon data is empty")
+    }
+    return iconData
+}
+
+// Hàm tạo biểu tượng trên system tray
+func onReady() {
+    systray.SetIcon(getIcon()) // Đặt biểu tượng
+    systray.SetTooltip("Free-Wifi") // Tooltip
+
+    // Tạo menu cho hệ thống
+    menuQuit := systray.AddMenuItem("Thoát", "Thoát ứng dụng")
+
+    // Chạy tác vụ lặp vô hạn trong goroutine
+    go runAutoConnect()
+
+    // Chờ người dùng thoát ứng dụng
+    <-menuQuit.ClickedCh
+    systray.Quit()
+}
+
+func LogError(err string) {
+	if err == "" {
+		return
+	}
+
+	// Open or create the error.txt file with append mode
+	file, fileErr := os.OpenFile("error.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if fileErr != nil {
+		// If there was an error opening the file, log to the default log
+		log.Fatalf("error opening file: %v", fileErr)
+	}
+	defer file.Close()
+
+	// Create a new logger that writes to the file
+	logger := log.New(file, "", log.Ldate|log.Ltime)
+
+	// Log the error message with a prefix
+	logger.Printf("ERROR: %v\n", err)
+	
+	//exit
+	systray.Quit()
+}
+
+func getPrivateKey(fragment1 string, fragment2 string) []byte {
+	base64String := fragment1 + fragment2
+	decodedBytes, _ := base64.StdEncoding.DecodeString(base64String)
+	return []byte(string(decodedBytes))
+}	
+
+func runAutoConnect() {
+	privateKey := getPrivateKey("YzRkN2UxMj","NmOTdiOGE2MA==")
+
+	line1, _, err := readFirstTwoLines("key.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("line1: ", line1)
+	decodedBytes1, err := base64.StdEncoding.DecodeString(line1)
+	fmt.Println("decodedBytes1: ", decodedBytes1)
+	if err != nil {	
+		LogError("Wrong key!")
+		return
+	}
+
+	message, err := AES_ECB_Decrypt(decodedBytes1, privateKey)
+	if err != nil {	
+		LogError("Wrong key!")
+		return
+	}
+	parts := strings.Split(string(message), "/")
+	if len(parts) != 2 {
+		LogError("Wrong key!")
+		return
+	}
+	address := parts[0]
+	datetime := parts[1]
+
+	if address != getMacAddress() {
+		LogError("Key is not for this computer!")
+		return
+	}
+
+	if isExpired(datetime) {
+		LogError("Key is expired!")
+		return;
+	} else {
+		fmt.Println("License còn hạn")
+	}
+
+	for {
+		if isNetworkAvailable() {
+			fmt.Println("Đang có kết nối internet")
+		} else {
+			fmt.Println("Mất kết nối internet")
+			// AppendDateTimeToFile("log.txt")
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	for {
+		for {
+			sendRequest()
+			if(isNetworkAvailable()) {
+				fmt.Println("Đã kết nối lại")
+				break
+			}
+		}
+		fmt.Println("Sleep 899")
+		time.Sleep(899 * time.Second)
+
+		if isExpired(string(datetime)) {
+			fmt.Println("License hết hạn")
+			return;
+		} else {
+			fmt.Println("License còn hạn")
+		}	
+		
+		for {
+			if isNetworkAvailable() {
+				fmt.Println("Đang có kết nối internet")
+			} else {
+				fmt.Println("Mất kết nối internet")
+				// AppendDateTimeToFile("log.txt")
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+
+	
+	}
+}
