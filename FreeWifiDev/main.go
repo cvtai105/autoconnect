@@ -7,11 +7,14 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +22,7 @@ import (
 )
 
 func main() {
+	
 	// Khởi động systray
     systray.Run(onReady, nil)
 }
@@ -95,10 +99,12 @@ func getMacAddress() string {
 
 	// Lặp qua từng giao diện mạng và in ra MAC address
 	for _, iface := range interfaces {
-		// Kiểm tra xem giao diện có MAC address không
+
 		if iface.HardwareAddr.String() != "" {
-			if(iface.Name == "Wi-Fi") {
-				return iface.HardwareAddr.String()
+			if(iface.Name == "Ethernet") {
+				
+				address := iface.HardwareAddr.String()
+				return strings.ToUpper(strings.ReplaceAll(address, ":", "-"))
 			}
 		}
 	}
@@ -141,24 +147,6 @@ func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
 	return append(ciphertext, padText...)
 }
 
-func AES_ECB_Encrypt(plaintext, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	// Padding plaintext to be a multiple of block size
-	plaintext = PKCS7Padding(plaintext, block.BlockSize())
-
-	ciphertext := make([]byte, len(plaintext))
-
-	// Encrypt each block
-	for i := 0; i < len(plaintext); i += block.BlockSize() {
-		block.Encrypt(ciphertext[i:i+block.BlockSize()], plaintext[i:i+block.BlockSize()])
-	}
-
-	return ciphertext, nil
-}
 
 func AES_ECB_Decrypt(ciphertext, key []byte) ([]byte, error) {
 
@@ -253,6 +241,28 @@ func LogError(err string) {
 	quit()
 }
 
+
+func LogInfo(err string) {
+	if err == "" {
+		return
+	}
+
+	// Open or create the error.txt file with append mode
+	file, fileErr := os.OpenFile("info.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if fileErr != nil {
+		// If there was an error opening the file, log to the default log
+		log.Fatalf("error opening file: %v", fileErr)
+	}
+	defer file.Close()
+
+	// Create a new logger that writes to the file
+	logger := log.New(file, "", log.Ldate|log.Ltime)
+
+	// Log the error message with a prefix
+	logger.Printf("INFO: %v\n", err)
+	fmt.Printf("INFO: %v\n", err)
+}
+
 func quit() {
 	os.Exit(1)
 	systray.Quit()
@@ -263,6 +273,26 @@ func getPrivateKey(fragment1 string, fragment2 string) []byte {
 	decodedBytes, _ := base64.StdEncoding.DecodeString(base64String)
 	return []byte(string(decodedBytes))
 }	
+
+func convertToSeconds(timeStr string) int {
+	// Define variables for minutes and seconds
+	var minutes, seconds int
+
+	// Use regular expression to extract minutes and seconds
+	re := regexp.MustCompile(`(\d+)m(\d+)s`)
+	match := re.FindStringSubmatch(timeStr)
+
+	if len(match) > 2 {
+		// Convert extracted minutes and seconds to integer
+		minutes, _ = strconv.Atoi(match[1])
+		seconds, _ = strconv.Atoi(match[2])
+	}
+
+	// Convert the time to total seconds
+	totalSeconds := (minutes * 60) + seconds
+	return totalSeconds
+}
+
 
 func runAutoConnect() {
 	privateKey := getPrivateKey("YzRkN2UxMj","NmOTdiOGE2MA==")
@@ -290,43 +320,70 @@ func runAutoConnect() {
 		quit()
 	}
 	address := parts[0]
+	
 	datetime := parts[1]
 	fmt.Println("address: ", address)
 	fmt.Println("expired: ", datetime)
 
-	if address != getMacAddress() {
+	if address != getMacAddress()  {
 		LogError("Cannot use key for this computer!")
 		quit()
 	}
+	fmt.Println("Address is correct")
 
 	if isExpired(datetime) {
 		LogError("Key is expired!")
 		quit()
 	} else {
-		fmt.Println("Key còn hạn")
+		fmt.Println("Time is not expired")
 	}
 
-	for {
-		if isNetworkAvailable() {
-			//fmt.Println("Đang có kết nối internet")
-		} else {
-			fmt.Println("Mất kết nối internet")
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
 
-	for {
+	
+
+	resp, err := http.Get("http://rescue.wi-mesh.vn/status")
+	if err != nil {
+		LogInfo("Need to connect to Free Wi-Mesh-Secure")
+		time.Sleep(2*time.Second)
 		for {
-			sendRequest()
-			if(isNetworkAvailable()) {
-				fmt.Println("Đã kết nối lại")
+			resp, err = http.Get("http://rescue.wi-mesh.vn/status")
+			if err == nil {
 				break
 			}
+			LogInfo("Need to connect to Free Wi-Mesh-Secure")
+			time.Sleep(2*time.Second)
 		}
-		//fmt.Println("Sleep 899")
-		time.Sleep(899 * time.Second)
+	}
+	defer resp.Body.Close()
 
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Failed to read response body: %v", err)
+	}else {
+
+		// Convert body to string
+		bodyStr := string(body)
+
+		// Define the regular expression to match "session-time-left" and its value
+		re := regexp.MustCompile(`"session-time-left":"(.*?)"`)
+
+		// Find the match
+		match := re.FindStringSubmatch(bodyStr)
+
+		if len(match) > 1 {
+			if match[1] != "" {
+				fmt.Println("session-time-left: ", match[1])
+				time.Sleep(time.Duration(convertToSeconds(match[1]) - 1) * time.Second)
+			}
+		} else {
+			fmt.Println("session-time-left not found")
+		}
+
+	}
+
+
+	for {
 		if isExpired(string(datetime)) {
 			LogError("Key is expired!")
 			quit();
@@ -336,14 +393,25 @@ func runAutoConnect() {
 
 		for {
 			if isNetworkAvailable() {
-				//fmt.Println("Đang có kết nối internet")
+				fmt.Println("Đang có kết nối internet")
 			} else {
-				//fmt.Println("Mất kết nối internet")
+				fmt.Println("Mất kết nối internet")
 				break
 			}
 			time.Sleep(500 * time.Millisecond)
 		}
 
-	
+		for {
+			sendRequest()
+			if(isNetworkAvailable()) {
+				fmt.Println("Đã kết nối lại")
+				break
+			}
+			time.Sleep(500*time.Millisecond)
+		}
+
+		//fmt.Println("Sleep 899")
+		time.Sleep(899 * time.Second)
+		
 	}
 }
