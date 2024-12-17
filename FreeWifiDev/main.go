@@ -90,24 +90,40 @@ func isExpired(dateStr string) bool {
 	return expired
 }
 
-func getMacAddress() string {
+func getMacAddress(ifaceName string) string {
 	// Lấy tất cả các giao diện mạng trên hệ thống
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Lặp qua từng giao diện mạng và in ra MAC address
-	for _, iface := range interfaces {
+	if ifaceName != "" {
+		ifaceName = "Ethernet"
+	}
 
-		if iface.HardwareAddr.String() != "" {
-			if(iface.Name == "Ethernet") {
-				
-				address := iface.HardwareAddr.String()
-				return strings.ToUpper(strings.ReplaceAll(address, ":", "-"))
+	listIfaceName := []string{}
+	listIfaceValue := []string{}
+
+	for _, iface := range interfaces {
+		ifaceValue := iface.HardwareAddr.String()
+		if ifaceValue != "" {
+			if(iface.Name == ifaceName) {
+				ifaceValue = strings.ToUpper(strings.ReplaceAll(ifaceValue, ":", "-"))
+				LogInfo(ifaceName + ": " + ifaceValue)
+				return ifaceValue
 			}
+			listIfaceName = append(listIfaceName, iface.Name)
+			listIfaceValue = append(listIfaceValue, ifaceValue)
 		}
 	}
+
+	message := "Không tìm thấy địa chỉ " + ifaceName
+
+	for i := 0; i < len(listIfaceName); i++ {
+		message += "\n" + listIfaceName[i] + ": " + listIfaceValue[i]
+	}
+
+	LogError(message)
 	return ""
 }
 // Hàm để đọc 2 dòng đầu tiên của file
@@ -299,40 +315,44 @@ func runAutoConnect() {
 
 	line1, _, err := readFirstTwoLines("key.txt")
 	if err != nil {
-		LogError("Cannot read key file!")
+		LogError("Không đọc được file key.txt! Kiểm tra xem key.txt có nằm cùng thư mục với FreeWifi.exe không?")
 	}
 
 	//fmt.Println("line1: ", line1)
 	decodedBytes1, err := base64.StdEncoding.DecodeString(line1)
 	if err != nil {	
-		LogError("Wrong key!")
+		LogError("Key sai! Hãy đảm bảo rằng bạn đã copy TOÀN BỘ key vào file key.txt và lưu file (Ctrl + S) trước khi chạy chương trình!")
 		quit()
 	}
 
 	message, err := AES_ECB_Decrypt(decodedBytes1, privateKey)
 	if err != nil {	
-		LogError("Wrong key!")
+		LogError("Key sai! Hãy đảm bảo rằng bạn đã copy TOÀN BỘ key vào file key.txt và lưu file (Ctrl + S) trước khi chạy chương trình!")
 		quit()
 	}
 	parts := strings.Split(string(message), "/")
-	if len(parts) != 2 {
-		LogError("Wrong key!")
+	if len(parts) < 2 {
+		LogError("Key sai! Hãy đảm bảo rằng bạn đã copy TOÀN BỘ key vào file key.txt và lưu file (Ctrl + S) trước khi chạy chương trình!")
 		quit()
 	}
-	address := parts[0]
 	
-	datetime := parts[1]
+	
+	address := parts[0]
+	addressName := ""
+	if len(parts) == 3 {
+		addressName = parts[2]
+	}
 	fmt.Println("address: ", address)
-	fmt.Println("expired: ", datetime)
-
-	if address != getMacAddress()  {
-		LogError("Cannot use key for this computer!")
+	if address != getMacAddress(addressName)  {
+		LogError("Sai địa chỉ! Kiểm tra file info.txt")
 		quit()
 	}
 	fmt.Println("Address is correct")
 
+	datetime := parts[1]
+	fmt.Println("expired: ", datetime)
 	if isExpired(datetime) {
-		LogError("Key is expired!")
+		LogError("Key hết hạn!")
 		quit()
 	} else {
 		fmt.Println("Time is not expired")
@@ -356,13 +376,14 @@ func runAutoConnect() {
 			sendRequest()
 			if(isNetworkAvailable()) {
 				fmt.Println("Đã kết nối lại")
+				time.Sleep(2*time.Second)
 				break
 			}
 			time.Sleep(1*time.Millisecond)
 		}
 
 		if isExpired(string(datetime)) {
-			LogError("Key is expired!")
+			LogError("Key hết hạn!")
 			quit();
 		} else {
 			fmt.Println("Key còn hạn")
@@ -371,7 +392,6 @@ func runAutoConnect() {
 		getStatusAndSleep()
 	}
 }
-
 
 func loopGetStatus() (*http.Response) {
 	for {
@@ -383,7 +403,6 @@ func loopGetStatus() (*http.Response) {
 		time.Sleep(2 * time.Second)
 	}
 }
-
 
 func getStatusAndSleep() {
 	resp := loopGetStatus()
