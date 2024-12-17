@@ -1,0 +1,19 @@
+expired key:
+
+
+incorrect address key without specifying address name:
+
+
+incorrect address key specifing address name:
+
+
+permanent key
+
+
+empty
+
+
+wrong key
+
+
+
