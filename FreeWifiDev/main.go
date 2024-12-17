@@ -338,25 +338,57 @@ func runAutoConnect() {
 		fmt.Println("Time is not expired")
 	}
 
+	getStatusAndSleep()
 
-	
+	for {
 
-	resp, err := http.Get("http://rescue.wi-mesh.vn/status")
-	if err != nil {
-		LogInfo("Need to connect to Free Wi-Mesh-Secure")
-		time.Sleep(2*time.Second)
 		for {
-			resp, err = http.Get("http://rescue.wi-mesh.vn/status")
-			if err == nil {
+			if isNetworkAvailable() {
+				fmt.Println("Đang có kết nối internet")
+			} else {
+				fmt.Println("Mất kết nối internet")
 				break
 			}
-			LogInfo("Need to connect to Free Wi-Mesh-Secure")
-			time.Sleep(2*time.Second)
+			time.Sleep(1*time.Millisecond)
 		}
+
+		for {
+			sendRequest()
+			if(isNetworkAvailable()) {
+				fmt.Println("Đã kết nối lại")
+				break
+			}
+			time.Sleep(1*time.Millisecond)
+		}
+
+		if isExpired(string(datetime)) {
+			LogError("Key is expired!")
+			quit();
+		} else {
+			fmt.Println("Key còn hạn")
+		}
+
+		getStatusAndSleep()
 	}
+}
+
+
+func loopGetStatus() (*http.Response) {
+	for {
+		resp, err := http.Get("http://rescue.wi-mesh.vn/status")
+		if err == nil {
+			return resp
+		}
+		LogInfo("Need to connect to Free Wi-Mesh-Secure")
+		time.Sleep(2 * time.Second)
+	}
+}
+
+
+func getStatusAndSleep() {
+	resp := loopGetStatus()
 	defer resp.Body.Close()
 
-	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Failed to read response body: %v", err)
@@ -375,43 +407,11 @@ func runAutoConnect() {
 			if match[1] != "" {
 				fmt.Println("session-time-left: ", match[1])
 				time.Sleep(time.Duration(convertToSeconds(match[1]) - 1) * time.Second)
+				fmt.Println("Awake!")
 			}
 		} else {
-			fmt.Println("session-time-left not found")
+			fmt.Println("Sleep time not found! Awake!")
 		}
 
-	}
-
-
-	for {
-		if isExpired(string(datetime)) {
-			LogError("Key is expired!")
-			quit();
-		} else {
-			fmt.Println("Key còn hạn")
-		}
-
-		for {
-			if isNetworkAvailable() {
-				fmt.Println("Đang có kết nối internet")
-			} else {
-				fmt.Println("Mất kết nối internet")
-				break
-			}
-			time.Sleep(500 * time.Millisecond)
-		}
-
-		for {
-			sendRequest()
-			if(isNetworkAvailable()) {
-				fmt.Println("Đã kết nối lại")
-				break
-			}
-			time.Sleep(500*time.Millisecond)
-		}
-
-		//fmt.Println("Sleep 899")
-		time.Sleep(899 * time.Second)
-		
 	}
 }
