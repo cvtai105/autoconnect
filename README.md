@@ -2,7 +2,7 @@
 1. Điền form
 2. Tải app
 3. Liên hệ và nhận key:
-   - TGKlLCCe0oog5xHMzvBhP6MK9zUfrJDWKxBCn2gjF37R2C4zDjtyInsddikL+3xV
+   - RlslgYf8105JzglQveLIgLWqRLOS9Q8N6wRCNODWjbI5P3Pm3Bq+ccbJok5FW0pE
    - e8du+hNQ/0qYSOmViFzKf/QQtVT3QChmcrEoyeVEX4NyEWTcupuyaP7YglgylQej
 5. Điền key và chạy app
 
