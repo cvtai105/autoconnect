@@ -97,7 +97,7 @@ func getMacAddress(ifaceName string) string {
 		log.Fatal(err)
 	}
 
-	if ifaceName != "" {
+	if ifaceName == "" {
 		ifaceName = "Ethernet"
 	}
 
@@ -107,8 +107,8 @@ func getMacAddress(ifaceName string) string {
 	for _, iface := range interfaces {
 		ifaceValue := iface.HardwareAddr.String()
 		if ifaceValue != "" {
+			ifaceValue = strings.ToUpper(strings.ReplaceAll(ifaceValue, ":", "-"))
 			if(iface.Name == ifaceName) {
-				ifaceValue = strings.ToUpper(strings.ReplaceAll(ifaceValue, ":", "-"))
 				LogInfo(ifaceName + ": " + ifaceValue)
 				return ifaceValue
 			}
@@ -168,7 +168,7 @@ func AES_ECB_Decrypt(ciphertext, key []byte) ([]byte, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-		  LogError("Decryption error: in")
+		  LogError("Lỗi decode! Kiểm tra lại key")
 		}
 	}()
 
@@ -204,7 +204,9 @@ func isNetworkAvailable() bool {
 	defer resp.Body.Close()
 
 	// Check if the status code indicates success
-	return resp.StatusCode == http.StatusOK
+	var status = resp.StatusCode 
+	fmt.Println("Status code: ", status)
+	return status == http.StatusOK || status == http.StatusNoContent
 }
 
 //go:embed icon.ico
@@ -257,7 +259,6 @@ func LogError(err string) {
 	quit()
 }
 
-
 func LogInfo(err string) {
 	if err == "" {
 		return
@@ -302,13 +303,28 @@ func convertToSeconds(timeStr string) int {
 		// Convert extracted minutes and seconds to integer
 		minutes, _ = strconv.Atoi(match[1])
 		seconds, _ = strconv.Atoi(match[2])
+	} else {
+		re = regexp.MustCompile(`(\d+)m`)
+		match = re.FindStringSubmatch(timeStr)
+
+		if len(match) > 1 {
+			// Convert extracted minutes to integer
+			minutes, _ = strconv.Atoi(match[1])
+		} else {
+			re = regexp.MustCompile(`(\d+)s`)
+			match = re.FindStringSubmatch(timeStr)
+
+			if len(match) > 1 {
+				// Convert extracted seconds to integer
+				seconds, _ = strconv.Atoi(match[1])
+			}
+		}
 	}
 
 	// Convert the time to total seconds
 	totalSeconds := (minutes * 60) + seconds
 	return totalSeconds
 }
-
 
 func runAutoConnect() {
 	privateKey := getPrivateKey("YzRkN2UxMj","NmOTdiOGE2MA==")
@@ -317,7 +333,10 @@ func runAutoConnect() {
 	if err != nil {
 		LogError("Không đọc được file key.txt! Kiểm tra xem key.txt có nằm cùng thư mục với FreeWifi.exe không?")
 	}
-
+	
+	if len(line1) == 0 {
+		LogError("File key.txt line 1 trống! Đảm bảo bạn đã lưu file (Ctrl + S) sau khi điền key")
+	}
 	//fmt.Println("line1: ", line1)
 	decodedBytes1, err := base64.StdEncoding.DecodeString(line1)
 	if err != nil {	
@@ -358,9 +377,9 @@ func runAutoConnect() {
 		fmt.Println("Time is not expired")
 	}
 
-	getStatusAndSleep()
-
+	
 	for {
+		getStatusAndSleep()
 
 		for {
 			if isNetworkAvailable() {
@@ -369,17 +388,18 @@ func runAutoConnect() {
 				fmt.Println("Mất kết nối internet")
 				break
 			}
-			time.Sleep(1*time.Millisecond)
+			time.Sleep(300*time.Millisecond)
 		}
 
 		for {
 			sendRequest()
 			if(isNetworkAvailable()) {
 				fmt.Println("Đã kết nối lại")
-				time.Sleep(2*time.Second)
 				break
+			} else {
+				fmt.Println("Network is not available! retrying...")
 			}
-			time.Sleep(1*time.Millisecond)
+			time.Sleep(200*time.Millisecond)
 		}
 
 		if isExpired(string(datetime)) {
@@ -388,8 +408,6 @@ func runAutoConnect() {
 		} else {
 			fmt.Println("Key còn hạn")
 		}
-
-		getStatusAndSleep()
 	}
 }
 
@@ -425,8 +443,10 @@ func getStatusAndSleep() {
 		if len(match) > 1 {
 			if match[1] != "" {
 				fmt.Println("session-time-left: ", match[1])
-				time.Sleep(time.Duration(convertToSeconds(match[1]) - 1) * time.Second)
+				time.Sleep(time.Duration(convertToSeconds(match[1]) - 2) * time.Second)
 				fmt.Println("Awake!")
+			}else{
+				fmt.Println("Sleep time not found! Awake!")
 			}
 		} else {
 			fmt.Println("Sleep time not found! Awake!")

@@ -1,1 +1,63 @@
 2024/12/06 08:34:47 ERROR: Need to connect to Free Wi-Mesh-Secure
+2024/12/19 13:33:08 ERROR: Không tìm thấy địa chỉ 
+Ethernet: d8:bb:c1:b1:9f:a1
+Local Area Connection* 1: f4:26:79:d3:62:34
+Wi-Fi: be:43:c1:56:65:03
+Bluetooth Network Connection: f4:26:79:d3:62:37
+2024/12/19 13:33:10 ERROR: Không tìm thấy địa chỉ 
+Ethernet: d8:bb:c1:b1:9f:a1
+Local Area Connection* 1: f4:26:79:d3:62:34
+Wi-Fi: be:43:c1:56:65:03
+Bluetooth Network Connection: f4:26:79:d3:62:37
+2024/12/19 13:45:48 ERROR: Không tìm thấy địa chỉ 
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 13:47:09 ERROR: Key is expried
+2024/12/19 14:06:05 ERROR: Key is expried
+2024/12/19 14:06:34 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:10:10 ERROR: Key is expried
+2024/12/19 14:10:29 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:11:24 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:25:27 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:33:59 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:35:02 ERROR: Decryption error: in
+2024/12/19 14:37:58 ERROR: File key.txt trống! Đảm bảo bạn đã lưu file (Ctrl + S) sau khi điền key
+2024/12/19 14:39:48 ERROR: Key sai! Hãy đảm bảo rằng bạn đã copy TOÀN BỘ key vào file key.txt và lưu file (Ctrl + S) trước khi chạy chương trình!
+2024/12/19 14:39:59 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:40:23 ERROR: Key is expried
+2024/12/19 14:42:54 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 14:50:15 ERROR: Không tìm thấy địa chỉ Wi-fi
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 14:50:49 ERROR: Không tìm thấy địa chỉ Wi-fi
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 15:53:06 ERROR: Không tìm thấy địa chỉ 2025-12-19 15:52:45
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 15:54:35 ERROR: Không tìm thấy địa chỉ 2025-12-19 15:54:27
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 15:55:28 ERROR: Không tìm thấy địa chỉ 2025-12-19 15:55:19
+Ethernet: D8-BB-C1-B1-9F-A1
+Local Area Connection* 1: F4-26-79-D3-62-34
+Local Area Connection* 2: F6-26-79-D3-62-33
+Wi-Fi: BE-43-C1-56-65-03
+Bluetooth Network Connection: F4-26-79-D3-62-37
+2024/12/19 15:55:44 ERROR: Sai địa chỉ! Kiểm tra file info.txt
+2024/12/19 15:56:43 ERROR: Key is expried

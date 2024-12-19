@@ -1,19 +1,22 @@
-expired key:
-
-
-incorrect address key without specifying address name:
-
-
-incorrect address key specifing address name:
-
-
-permanent key
-
-
 empty
+random key
+e8du+hNQ/0qYSOmViFzKfw6vUWacFineqY+54OVxNe7R2C4zDjtyInsddikL+3xX
 
+expired key: 
+e8du+hNQ/0qYSOmViFzKf/0I+xe5sumPf7QdAuYB0/1yEWTcupuyaP7YglgylQej
 
-wrong key
+expried key có chỉ định địa chỉ:
+TGKlLCCe0oog5xHMzvBhPw/s+mT3E4I/wsZ3PpWow97R2C4zDjtyInsddikL+3xV
 
+đưa sai địa chỉ (không chỉ định địa chỉ): 
+e8du+hNQ/0qYSOmViFzKfw6vUWacFineqY+54OVxNe5yEWTcupuyaP7YglgylQej
 
+chỉ định địa chỉ nhưng sai địa chỉ đã cung cấp:
+e8du+hNQ/0qYSOmViFzKfw6vUWacFineqY+54OVxNe7R2C4zDjtyInsddikL+3xV
+
+permanent key (không chỉ định địa chỉ)
+e8du+hNQ/0qYSOmViFzKf/QQtVT3QChmcrEoyeVEX4NyEWTcupuyaP7YglgylQej
+
+permanent key (Có chỉ định địa chỉ)
+TGKlLCCe0oog5xHMzvBhP6MK9zUfrJDWKxBCn2gjF37R2C4zDjtyInsddikL+3xV
 
