@@ -8,7 +8,7 @@
 
 ## Trong trường hợp dùng dài ngày
 1. Random hardware address mỗi ngày
-2. Tự động khởi động tool
+2. Tự động khởi động tool (tạo shortcut, copy và past vào folder startup)
 
 ## Một số lỗi phổ biến của các bạn
 1. Copy key vào key.txt nhưng chưa lưu file
